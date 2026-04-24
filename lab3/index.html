@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>幸運抽籤筒 - Lab 3</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Serif+TC:wght@700&display=swap');
         
@@ -253,6 +254,7 @@
             transform: scale(0.8);
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             max-width: 90%;
+            position: relative;
         }
 
         .modal-overlay.active .modal-content {
@@ -273,6 +275,176 @@
             font-size: 1.2rem;
             margin-bottom: 3rem;
             line-height: 1.6;
+        }
+
+        /* 特效 - 大吉 */
+        .modal-overlay.great-luck-overlay {
+            background: radial-gradient(circle, rgba(244, 114, 182, 0.2) 0%, rgba(253, 242, 248, 0.95) 80%);
+        }
+        .modal-content.great-luck {
+            border: 5px solid #F472B6;
+            background: #FFFFFF;
+            box-shadow: 0 0 50px rgba(244, 114, 182, 0.8), 0 0 100px rgba(244, 114, 182, 0.4);
+            animation: float-up-down 3s ease-in-out infinite;
+        }
+        @keyframes float-up-down {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.05) translateY(-15px); }
+        }
+
+        /* 特效 - 吉 / 中吉 */
+        .modal-content.good-luck-plus {
+            border: 3px solid #F472B6;
+            background: #FFFFFF;
+            box-shadow: 0 0 20px rgba(244, 114, 182, 0.3);
+            animation: gentle-wobble 2.5s ease-in-out infinite;
+        }
+        @keyframes gentle-wobble {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.02) rotate(-3deg); }
+            75% { transform: scale(1.02) rotate(3deg); }
+        }
+
+        /* 特效 - 小吉 */
+        .modal-content.good-luck-minor {
+            border: 3px dashed #FDBA74; /* Soft Orange */
+            background: #FFF7ED;
+            animation: flip-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+        .modal-content.good-luck-minor .fortune-title {
+            color: #EA580C; /* Orange */
+            text-shadow: none;
+        }
+        @keyframes flip-in {
+            0% { transform: scale(0.5) rotateX(90deg); opacity: 0; }
+            100% { transform: scale(1) rotateX(0deg); opacity: 1; }
+        }
+
+        /* 裝飾品 (天使/惡魔) */
+        #modalDecorations {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .halo {
+            position: absolute;
+            top: -45px; left: 50%; transform: translateX(-50%);
+            width: 90px; height: 25px;
+            border: 5px solid #FDE047; border-radius: 50%;
+            box-shadow: 0 0 15px #FDE047, inset 0 0 10px #FDE047;
+            animation: float-halo 2s ease-in-out infinite;
+        }
+        @keyframes float-halo {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotateX(60deg); }
+            50% { transform: translateX(-50%) translateY(-10px) rotateX(60deg); }
+        }
+        .wing {
+            position: absolute; top: 40px; width: 100px; height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23FFFFFF" stroke="%23F472B6" stroke-width="2" d="M10,50 Q30,10 90,10 Q60,40 80,60 Q50,70 70,90 Q30,80 10,50 Z"/></svg>') no-repeat center center;
+            background-size: contain; animation: flap 1.5s ease-in-out infinite;
+        }
+        .wing-left { left: -70px; transform-origin: right center; }
+        .wing-right { right: -70px; transform: scaleX(-1); transform-origin: left center; animation: flap-right 1.5s ease-in-out infinite; }
+        @keyframes flap { 0%, 100% { transform: rotate(0deg) scaleX(1); } 50% { transform: rotate(-15deg) scaleX(1); } }
+        @keyframes flap-right { 0%, 100% { transform: rotate(0deg) scaleX(-1); } 50% { transform: rotate(-15deg) scaleX(-1); } }
+
+        .horn {
+            position: absolute; top: -30px; width: 30px; height: 50px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23991B1B" d="M50,10 Q20,50 10,90 Q50,80 90,90 Q80,50 50,10 Z"/></svg>') no-repeat center center;
+            background-size: contain;
+        }
+        .horn-left { left: 40px; transform: rotate(-20deg); }
+        .horn-right { right: 40px; transform: rotate(20deg) scaleX(-1); }
+        
+        .bat-wing {
+            position: absolute; top: 40px; width: 120px; height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23450A0A" stroke="%23991B1B" stroke-width="2" d="M10,10 Q40,30 90,50 Q70,70 90,90 Q40,70 10,90 Q30,50 10,10 Z"/></svg>') no-repeat center center;
+            background-size: contain; animation: flap-bat 0.5s ease-in-out infinite;
+        }
+        .bat-wing-left { left: -90px; transform-origin: right center; }
+        .bat-wing-right { right: -90px; transform: scaleX(-1); transform-origin: left center; animation: flap-bat-right 0.5s ease-in-out infinite; }
+        @keyframes flap-bat { 0%, 100% { transform: rotate(0deg) scaleX(1); } 50% { transform: rotate(-30deg) scaleX(1); } }
+        @keyframes flap-bat-right { 0%, 100% { transform: rotate(0deg) scaleX(-1); } 50% { transform: rotate(-30deg) scaleX(-1); } }
+
+        /* 特效 - 凶 */
+        .modal-overlay.bad-luck-overlay {
+            background: rgba(15, 23, 42, 0.95);
+        }
+        .modal-content.bad-luck {
+            background: #1E293B;
+            border: 2px solid #475569;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            animation: shake-bad 0.6s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        .modal-content.bad-luck .fortune-title {
+            color: #94A3B8;
+            text-shadow: 2px 2px 0px #0F172A;
+        }
+        .modal-content.bad-luck .fortune-desc {
+            color: #CBD5E1;
+        }
+        .modal-content.bad-luck .btn {
+            background: #475569;
+            box-shadow: none;
+            color: #F8FAFC;
+        }
+        .modal-content.bad-luck .btn:hover {
+            background: #64748B;
+        }
+
+        /* 特效 - 大凶 */
+        .modal-overlay.terrible-luck-overlay {
+            background: rgba(0, 0, 0, 0.98);
+            animation: flash-thunder 4s infinite;
+        }
+        .modal-content.terrible-luck {
+            background: #000000;
+            border: 3px solid #991B1B;
+            box-shadow: 0 0 40px rgba(153, 27, 27, 0.8);
+            animation: shake-intense 0.4s cubic-bezier(.36,.07,.19,.97) both infinite;
+        }
+        .modal-content.terrible-luck .fortune-title {
+            color: #EF4444;
+            text-shadow: 3px 3px 0px #450A0A;
+        }
+        .modal-content.terrible-luck .fortune-desc {
+            color: #FCA5A5;
+        }
+        .modal-content.terrible-luck .btn {
+            background: #7F1D1D;
+            color: #FEF2F2;
+            box-shadow: 0 0 15px rgba(153, 27, 27, 0.5);
+            border: 1px solid #DC2626;
+        }
+        .modal-content.terrible-luck .btn:hover {
+            background: #991B1B;
+        }
+
+        @keyframes flash-thunder {
+            0%, 94%, 100% { background: rgba(0, 0, 0, 0.98); }
+            95% { background: rgba(255, 255, 255, 0.9); }
+            96% { background: rgba(0, 0, 0, 0.98); }
+            98% { background: rgba(255, 255, 255, 0.7); }
+        }
+
+        @keyframes shake-intense {
+            0%, 100% { transform: scale(1) translate3d(0, 0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: scale(1) translate3d(-3px, 3px, 0) rotate(-1deg); }
+            20%, 40%, 60%, 80% { transform: scale(1) translate3d(3px, -3px, 0) rotate(1deg); }
+        }
+
+        @keyframes shake-bad {
+            10%, 90% { transform: scale(1) translate3d(-2px, 0, 0); }
+            20%, 80% { transform: scale(1) translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: scale(1) translate3d(-8px, 0, 0); }
+            40%, 60% { transform: scale(1) translate3d(8px, 0, 0); }
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
         }
 
     </style>
@@ -302,6 +474,7 @@
     <!-- 結果彈出視窗 -->
     <div id="resultModal" class="modal-overlay">
         <div class="modal-content">
+            <div id="modalDecorations"></div>
             <h2 id="fortuneTitle" class="fortune-title">大吉</h2>
             <p id="fortuneDesc" class="fortune-desc">幸運女神降臨！<br>今天做什麼都會順順利利，充滿好運的一天。</p>
             <button id="closeModalBtn" class="btn">再抽一次</button>
@@ -319,13 +492,30 @@
         const fortuneDesc = document.getElementById('fortuneDesc');
 
         const fortunes = [
+            // 大吉
             { title: "大吉", desc: "幸運女神降臨！<br>今天做什麼都會順順利利，充滿好運的一天。" },
+            { title: "大吉", desc: "心想事成！<br>期待已久的事情將會迎來最棒的發展。" },
+            { title: "大吉", desc: "無可挑剔的極佳運氣！<br>快去買張彩券，或是大膽去追求你的夢想吧！" },
+            // 中吉
             { title: "中吉", desc: "好運連連！<br>會有一些意想不到的小確幸發生喔。" },
-            { title: "小吉", desc: "平穩踏實！<br>雖然沒有大驚喜，但平安就是福。" },
+            { title: "中吉", desc: "貴人相助！<br>遇到困難時，周遭會有人適時伸出援手。" },
+            { title: "中吉", desc: "進展順利！<br>手邊的工作與計畫都會按照預期穩步前進。" },
+            // 吉
             { title: "吉", desc: "運氣不錯！<br>保持愉悅的心情，好事自然會發生。" },
-            { title: "末吉", desc: "倒吃甘蔗！<br>遇到困難不要放棄，最終會有好結果的。" },
+            { title: "吉", desc: "春風得意！<br>在人際交流上會有很棒的收穫，適合交新朋友。" },
+            { title: "吉", desc: "靈感湧現！<br>今天是個非常適合創作與發揮創意的好日子。" },
+            // 小吉
+            { title: "小吉", desc: "平穩踏實！<br>雖然沒有巨大的驚喜，但平安順遂就是最大的福氣。" },
+            { title: "小吉", desc: "微風輕拂！<br>日常生活中藏著值得細細品味的細微美好。" },
+            { title: "小吉", desc: "穩步前行！<br>慢慢來比較快，不要急躁，一切都在正軌上。" },
+            // 凶
             { title: "凶", desc: "稍有阻礙。<br>今天行事請多加小心，凡事三思而後行。" },
-            { title: "大凶", desc: "烏雲密布。<br>建議今天低調行事，早點回家休息保平安。" }
+            { title: "凶", desc: "粗心大意。<br>出門前多檢查一下隨身物品，避免遺失或忘東忘西。" },
+            { title: "凶", desc: "人多口雜。<br>盡量避免參與別人的爭執，保持中立才能全身而退。" },
+            // 大凶
+            { title: "大凶", desc: "烏雲密布。<br>建議今天低調行事，早點回家休息保平安。" },
+            { title: "大凶", desc: "諸事不宜。<br>重要的決定最好延後再做，今天絕對不宜衝動行事。" },
+            { title: "大凶", desc: "風雨交加。<br>深呼吸，這只是運氣的低谷，洗個熱水澡明天就會好起來的。" }
         ];
 
         // 延遲工具函數
@@ -368,13 +558,50 @@
             fortuneTitle.textContent = selectedFortune.title;
             fortuneDesc.innerHTML = selectedFortune.desc;
             
-            // 根據吉凶設定不同的顏色
-            if (selectedFortune.title.includes("大吉")) {
+            // 清除之前的特效
+            fortuneTitle.style.color = "";
+            resultModal.classList.remove('bad-luck-overlay', 'terrible-luck-overlay', 'great-luck-overlay');
+            const modalContent = document.querySelector('.modal-content');
+            modalContent.className = 'modal-content'; // 重置 class
+            const modalDecorations = document.getElementById('modalDecorations');
+            modalDecorations.innerHTML = ''; // 清除裝飾
+            
+            // 根據吉凶設定不同的顏色與特效
+            if (selectedFortune.title === "大吉") {
                 fortuneTitle.style.color = "#EC4899"; // 粉色
-            } else if (selectedFortune.title.includes("凶")) {
-                fortuneTitle.style.color = "#64748B"; // 灰色
-            } else {
-                fortuneTitle.style.color = "#F472B6"; // 淺粉色
+                resultModal.classList.add('great-luck-overlay');
+                modalContent.classList.add('great-luck');
+                modalDecorations.innerHTML = '<div class="halo"></div><div class="wing wing-left"></div><div class="wing wing-right"></div>';
+                // 持續 1.5 秒的兩側煙火彩帶
+                if (typeof confetti === 'function') {
+                    let end = Date.now() + 1500;
+                    (function frame() {
+                        confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#EC4899', '#FDE047', '#FFFFFF'], zIndex: 200 });
+                        confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#38BDF8', '#C084FC', '#FFFFFF'], zIndex: 200 });
+                        if (Date.now() < end) requestAnimationFrame(frame);
+                    }());
+                }
+            } else if (selectedFortune.title === "吉" || selectedFortune.title === "中吉") {
+                fortuneTitle.style.color = "#EC4899"; // 統一粉色
+                modalContent.classList.add('good-luck-plus');
+                // 單次粉色系彩帶爆發
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 80, spread: 80, origin: { y: 0.6 },
+                        colors: ['#EC4899', '#F472B6', '#FFFFFF'], zIndex: 200
+                    });
+                }
+            } else if (selectedFortune.title === "小吉") {
+                fortuneTitle.style.color = "#EA580C"; // 橘色
+                modalContent.classList.add('good-luck-minor');
+                // 沒有彩帶，單純橘色系的 3D 翻轉動畫
+            } else if (selectedFortune.title === "凶") {
+                resultModal.classList.add('bad-luck-overlay');
+                modalContent.classList.add('bad-luck');
+            } else if (selectedFortune.title === "大凶") {
+                resultModal.classList.add('terrible-luck-overlay');
+                modalContent.classList.add('terrible-luck');
+                modalDecorations.innerHTML = '<div class="horn horn-left"></div><div class="horn horn-right"></div><div class="bat-wing bat-wing-left"></div><div class="bat-wing bat-wing-right"></div>';
             }
 
             resultModal.classList.add('active');
